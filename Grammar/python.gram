@@ -136,7 +136,7 @@ compound_stmt[stmt_ty]:
 # KEYWORD TUPLES
 # ==============
 
-return_kwd:
+return_kwd[char*]:
     | 'return'
     | 'geef'
 
@@ -217,7 +217,7 @@ for_kwd:
     | 'for'
     | 'zolang'
 
-try_kwd:
+try_kwd[Token*]:
     | 'try'
     | 'probeer'
 
@@ -1418,8 +1418,8 @@ invalid_with_stmt_indent:
         RAISE_INDENTATION_ERROR("expected an indented block after 'with' statement on line %d", a->lineno) }
 
 invalid_try_stmt:
-    | a='try' ':' NEWLINE !INDENT {
-        RAISE_INDENTATION_ERROR("expected an indented block after 'try' statement on line %d", a->lineno) }
+    | a=try_kwd ':' NEWLINE !INDENT {
+        RAISE_INDENTATION_ERROR("expected an indented block after %s statement on line %d", PyBytes_AS_STRING(PyObject_Bytes(a->bytes)), a->lineno) }
     | 'try' ':' block !('except' | 'finally') { RAISE_SYNTAX_ERROR("expected 'except' or 'finally' block") }
     | 'try' ':' block* except_block+ a='except' b='*' expression ['as' NAME] ':' {
         RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "cannot have both 'except' and 'except*' on the same 'try'") }
