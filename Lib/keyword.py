@@ -19,7 +19,10 @@ kwlist = [
     'False',
     'None',
     'True',
+    'als',
     'and',
+    'anderals',
+    'anders',
     'as',
     'assert',
     'async',
@@ -50,7 +53,8 @@ kwlist = [
     'try',
     'while',
     'with',
-    'yield'
+    'yield',
+    'zolang'
 ]
 
 softkwlist = [

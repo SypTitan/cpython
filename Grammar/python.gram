@@ -111,27 +111,137 @@ simple_stmt[stmt_ty] (memo):
     | assignment
     | &"type" type_alias
     | e=star_expressions { _PyAST_Expr(e, EXTRA) }
-    | &'return' return_stmt
-    | &('import' | 'from') import_stmt
-    | &'raise' raise_stmt
-    | 'pass' { _PyAST_Pass(EXTRA) }
-    | &'del' del_stmt
-    | &'yield' yield_stmt
-    | &'assert' assert_stmt
-    | 'break' { _PyAST_Break(EXTRA) }
-    | 'continue' { _PyAST_Continue(EXTRA) }
-    | &'global' global_stmt
-    | &'nonlocal' nonlocal_stmt
+    | &return_kwd return_stmt
+    | &(import_kwd | from_kwd) import_stmt
+    | &raise_kwd raise_stmt
+    | pass_kwd { _PyAST_Pass(EXTRA) }
+    | &del_kwd del_stmt
+    | &yield_kwd yield_stmt
+    | &assert_kwd assert_stmt
+    | break_kwd { _PyAST_Break(EXTRA) }
+    | continue_kwd { _PyAST_Continue(EXTRA) }
+    | &global_kwd global_stmt
+    | &nonlocal_kwd nonlocal_stmt
 
 compound_stmt[stmt_ty]:
     | &('def' | '@' | ASYNC) function_def
-    | &'if' if_stmt
-    | &('class' | '@') class_def
-    | &('with' | ASYNC) with_stmt
-    | &('for' | ASYNC) for_stmt
-    | &'try' try_stmt
-    | &'while' while_stmt
+    | &if_kwd if_stmt
+    | &(class_kwd | '@') class_def
+    | &(with_kwd | ASYNC) with_stmt
+    | &(for_kwd | ASYNC) for_stmt
+    | &try_kwd try_stmt
+    | &while_kwd while_stmt
     | match_stmt
+
+# KEYWORD TUPLES
+# ==============
+
+return_kwd:
+    | 'return'
+    | 'geef'
+
+import_kwd:
+    | 'import'
+    | 'gebruik'
+
+from_kwd:
+    | 'from'
+    | 'uit'
+    | 'van'
+
+raise_kwd:
+    | 'raise'
+    | 'hef'
+    | 'gooi'
+
+pass_kwd:
+    | 'pass'
+    | 'pas'
+
+del_kwd:
+    | 'del'
+    | 'verwijder'
+
+yield_kwd:
+    | 'yield'
+    | 'lever'
+
+assert_kwd:
+    | 'assert'
+    | 'verklaar'
+
+break_kwd:
+    | 'break'
+    | 'ontsnap'
+# ? Mogelijk 'stop'
+
+continue_kwd:
+    | 'continue'
+    | 'vervolg'
+
+global_kwd:
+    | 'global'
+    | 'universeel'
+
+nonlocal_kwd:
+    | 'nonlocal'
+    | 'nietlokaal'
+
+if_kwd:
+    | 'if'
+    | 'als'
+# ! Conflict with `as_kwd`
+
+elif_kwd:
+    | 'elif'
+    | 'anderals'
+
+else_kwd:
+    | 'else'
+    | 'anders'
+
+class_kwd:
+    | 'class'
+    | 'klasse'
+
+with_kwd:
+    | 'with'
+    | 'met'
+
+as_kwd:
+    | 'as'
+    | 'als'
+# ! Conflict with `is_kwd`
+
+for_kwd:
+    | 'for'
+    | 'zolang'
+
+try_kwd:
+    | 'try'
+    | 'probeer'
+
+except_kwd:
+    | 'except'
+    | 'uitgezonderd'
+    | 'behalve'
+
+finally_kwd:
+    | 'finally'
+    | 'daarna'
+# ? 'als laatste'?
+
+while_kwd:
+    | 'while'
+    | 'zolang'
+
+match_skwd:
+    | "match"
+    | "vergelijk"
+
+case_skwd:
+    | "case"
+    | "geval"
 
 # SIMPLE STATEMENTS
 # =================
@@ -172,25 +282,25 @@ augassign[AugOperator*]:
     | '//=' { _PyPegen_augoperator(p, FloorDiv) }
 
 return_stmt[stmt_ty]:
-    | 'return' a=[star_expressions] { _PyAST_Return(a, EXTRA) }
+    | return_kwd a=[star_expressions] { _PyAST_Return(a, EXTRA) }
 
 raise_stmt[stmt_ty]:
-    | 'raise' a=expression b=['from' z=expression { z }] { _PyAST_Raise(a, b, EXTRA) }
-    | 'raise' { _PyAST_Raise(NULL, NULL, EXTRA) }
+    | raise_kwd a=expression b=['from' z=expression { z }] { _PyAST_Raise(a, b, EXTRA) }
+    | raise_kwd { _PyAST_Raise(NULL, NULL, EXTRA) }
 
-global_stmt[stmt_ty]: 'global' a[asdl_expr_seq*]=','.NAME+ {
+global_stmt[stmt_ty]: global_kwd a[asdl_expr_seq*]=','.NAME+ {
     _PyAST_Global(CHECK(asdl_identifier_seq*, _PyPegen_map_names_to_ids(p, a)), EXTRA) }
 
-nonlocal_stmt[stmt_ty]: 'nonlocal' a[asdl_expr_seq*]=','.NAME+ {
+nonlocal_stmt[stmt_ty]: nonlocal_kwd a[asdl_expr_seq*]=','.NAME+ {
     _PyAST_Nonlocal(CHECK(asdl_identifier_seq*, _PyPegen_map_names_to_ids(p, a)), EXTRA) }
 
 del_stmt[stmt_ty]:
-    | 'del' a=del_targets &(';' | NEWLINE) { _PyAST_Delete(a, EXTRA) }
+    | del_kwd a=del_targets &(';' | NEWLINE) { _PyAST_Delete(a, EXTRA) }
     | invalid_del_stmt
 
 yield_stmt[stmt_ty]: y=yield_expr { _PyAST_Expr(y, EXTRA) }
 
-assert_stmt[stmt_ty]: 'assert' a=expression b=[',' z=expression { z }] { _PyAST_Assert(a, b, EXTRA) }
+assert_stmt[stmt_ty]: assert_kwd a=expression b=[',' z=expression { z }] { _PyAST_Assert(a, b, EXTRA) }
 
 import_stmt[stmt_ty]:
     | invalid_import
@@ -200,12 +310,12 @@ import_stmt[stmt_ty]:
 # Import statements
 # -----------------
 
-import_name[stmt_ty]: 'import' a=dotted_as_names { _PyAST_Import(a, EXTRA) }
+import_name[stmt_ty]: import_kwd a=dotted_as_names { _PyAST_Import(a, EXTRA) }
 # note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
 import_from[stmt_ty]:
-    | 'from' a=('.' | '...')* b=dotted_name 'import' c=import_from_targets {
+    | from_kwd a=('.' | '...')* b=dotted_name import_kwd c=import_from_targets {
         _PyPegen_checked_future_import(p, b->v.Name.id, c, _PyPegen_seq_count_dots(a), EXTRA) }
-    | 'from' a=('.' | '...')+ 'import' b=import_from_targets {
+    | from_kwd a=('.' | '...')+ import_kwd b=import_from_targets {
         _PyAST_ImportFrom(NULL, b, _PyPegen_seq_count_dots(a), EXTRA) }
 import_from_targets[asdl_alias_seq*]:
     | '(' a=import_from_as_names [','] ')' { a }
@@ -215,13 +325,13 @@ import_from_targets[asdl_alias_seq*]:
 import_from_as_names[asdl_alias_seq*]:
     | a[asdl_alias_seq*]=','.import_from_as_name+ { a }
 import_from_as_name[alias_ty]:
-    | a=NAME b=['as' z=NAME { z }] { _PyAST_alias(a->v.Name.id,
+    | a=NAME b=[as_kwd z=NAME { z }] { _PyAST_alias(a->v.Name.id,
                                                (b) ? ((expr_ty) b)->v.Name.id : NULL,
                                                EXTRA) }
 dotted_as_names[asdl_alias_seq*]:
     | a[asdl_alias_seq*]=','.dotted_as_name+ { a }
 dotted_as_name[alias_ty]:
-    | a=dotted_name b=['as' z=NAME { z }] { _PyAST_alias(a->v.Name.id,
+    | a=dotted_name b=[as_kwd z=NAME { z }] { _PyAST_alias(a->v.Name.id,
                                                       (b) ? ((expr_ty) b)->v.Name.id : NULL,
                                                       EXTRA) }
 dotted_name[expr_ty]:
@@ -250,7 +360,7 @@ class_def[stmt_ty]:
 
 class_def_raw[stmt_ty]:
     | invalid_class_def_raw
-    | 'class' a=NAME t=[type_params] b=['(' z=[arguments] ')' { z }] ':' c=block {
+    | class_kwd a=NAME t=[type_params] b=['(' z=[arguments] ')' { z }] ':' c=block {
         _PyAST_ClassDef(a->v.Name.id,
                      (b) ? ((expr_ty) b)->v.Call.args : NULL,
                      (b) ? ((expr_ty) b)->v.Call.keywords : NULL,
@@ -356,33 +466,32 @@ default[expr_ty]: '=' a=expression { a } | invalid_default
 
 if_stmt[stmt_ty]:
     | invalid_if_stmt
-    | 'if' a=named_expression ':' b=block c=elif_stmt {
+    | if_kwd a=named_expression ':' b=block c=elif_stmt {
         _PyAST_If(a, b, CHECK(asdl_stmt_seq*, _PyPegen_singleton_seq(p, c)), EXTRA) }
-    | 'if' a=named_expression ':' b=block c=[else_block] { _PyAST_If(a, b, c, EXTRA) }
+    | if_kwd a=named_expression ':' b=block c=[else_block] { _PyAST_If(a, b, c, EXTRA) }
 elif_stmt[stmt_ty]:
     | invalid_elif_stmt
-    | 'elif' a=named_expression ':' b=block c=elif_stmt {
+    | elif_kwd a=named_expression ':' b=block c=elif_stmt {
         _PyAST_If(a, b, CHECK(asdl_stmt_seq*, _PyPegen_singleton_seq(p, c)), EXTRA) }
-    | 'elif' a=named_expression ':' b=block c=[else_block] { _PyAST_If(a, b, c, EXTRA) }
+    | elif_kwd a=named_expression ':' b=block c=[else_block] { _PyAST_If(a, b, c, EXTRA) }
 else_block[asdl_stmt_seq*]:
     | invalid_else_stmt
-    | 'else' &&':' b=block { b }
+    | else_kwd &&':' b=block { b }
 
 # While statement
 # ---------------
 
 while_stmt[stmt_ty]:
     | invalid_while_stmt
-    | 'while' a=named_expression ':' b=block c=[else_block] { _PyAST_While(a, b, c, EXTRA) }
-
+    | while_kwd a=named_expression ':' b=block c=[else_block] { _PyAST_While(a, b, c, EXTRA) }
 # For statement
 # -------------
 
 for_stmt[stmt_ty]:
     | invalid_for_stmt
-    | 'for' t=star_targets 'in' ~ ex=star_expressions ':' tc=[TYPE_COMMENT] b=block el=[else_block] {
+    | for_kwd t=star_targets 'in' ~ ex=star_expressions ':' tc=[TYPE_COMMENT] b=block el=[else_block] {
         _PyAST_For(t, ex, b, el, NEW_TYPE_COMMENT(p, tc), EXTRA) }
-    | ASYNC 'for' t=star_targets 'in' ~ ex=star_expressions ':' tc=[TYPE_COMMENT] b=block el=[else_block] {
+    | ASYNC for_kwd t=star_targets 'in' ~ ex=star_expressions ':' tc=[TYPE_COMMENT] b=block el=[else_block] {
         CHECK_VERSION(stmt_ty, 5, "Async for loops are", _PyAST_AsyncFor(t, ex, b, el, NEW_TYPE_COMMENT(p, tc), EXTRA)) }
     | invalid_for_target
 
@@ -391,18 +500,18 @@ for_stmt[stmt_ty]:
 
 with_stmt[stmt_ty]:
     | invalid_with_stmt_indent
-    | 'with' '(' a[asdl_withitem_seq*]=','.with_item+ ','? ')' ':' b=block {
+    | with_kwd '(' a[asdl_withitem_seq*]=','.with_item+ ','? ')' ':' b=block {
         _PyAST_With(a, b, NULL, EXTRA) }
-    | 'with' a[asdl_withitem_seq*]=','.with_item+ ':' tc=[TYPE_COMMENT] b=block {
+    | with_kwd a[asdl_withitem_seq*]=','.with_item+ ':' tc=[TYPE_COMMENT] b=block {
         _PyAST_With(a, b, NEW_TYPE_COMMENT(p, tc), EXTRA) }
-    | ASYNC 'with' '(' a[asdl_withitem_seq*]=','.with_item+ ','? ')' ':' b=block {
+    | ASYNC with_kwd '(' a[asdl_withitem_seq*]=','.with_item+ ','? ')' ':' b=block {
        CHECK_VERSION(stmt_ty, 5, "Async with statements are", _PyAST_AsyncWith(a, b, NULL, EXTRA)) }
-    | ASYNC 'with' a[asdl_withitem_seq*]=','.with_item+ ':' tc=[TYPE_COMMENT] b=block {
+    | ASYNC with_kwd a[asdl_withitem_seq*]=','.with_item+ ':' tc=[TYPE_COMMENT] b=block {
        CHECK_VERSION(stmt_ty, 5, "Async with statements are", _PyAST_AsyncWith(a, b, NEW_TYPE_COMMENT(p, tc), EXTRA)) }
     | invalid_with_stmt
 
 with_item[withitem_ty]:
-    | e=expression 'as' t=star_target &(',' | ')' | ':') { _PyAST_withitem(e, t, p->arena) }
+    | e=expression as_kwd t=star_target &(',' | ')' | ':') { _PyAST_withitem(e, t, p->arena) }
     | invalid_with_item
     | e=expression { _PyAST_withitem(e, NULL, p->arena) }
 
@@ -411,9 +520,9 @@ with_item[withitem_ty]:
 
 try_stmt[stmt_ty]:
     | invalid_try_stmt
-    | 'try' &&':' b=block f=finally_block { _PyAST_Try(b, NULL, NULL, f, EXTRA) }
-    | 'try' &&':' b=block ex[asdl_excepthandler_seq*]=except_block+ el=[else_block] f=[finally_block] { _PyAST_Try(b, ex, el, f, EXTRA) }
-    | 'try' &&':' b=block ex[asdl_excepthandler_seq*]=except_star_block+ el=[else_block] f=[finally_block] {
+    | try_kwd &&':' b=block f=finally_block { _PyAST_Try(b, NULL, NULL, f, EXTRA) }
+    | try_kwd &&':' b=block ex[asdl_excepthandler_seq*]=except_block+ el=[else_block] f=[finally_block] { _PyAST_Try(b, ex, el, f, EXTRA) }
+    | try_kwd &&':' b=block ex[asdl_excepthandler_seq*]=except_star_block+ el=[else_block] f=[finally_block] {
         CHECK_VERSION(stmt_ty, 11, "Exception groups are",
                       _PyAST_TryStar(b, ex, el, f, EXTRA)) }
 
@@ -423,24 +532,24 @@ try_stmt[stmt_ty]:
 
 except_block[excepthandler_ty]:
     | invalid_except_stmt_indent
-    | 'except' e=expression t=['as' z=NAME { z }] ':' b=block {
+    | except_kwd e=expression t=[as_kwd z=NAME { z }] ':' b=block {
         _PyAST_ExceptHandler(e, (t) ? ((expr_ty) t)->v.Name.id : NULL, b, EXTRA) }
-    | 'except' ':' b=block { _PyAST_ExceptHandler(NULL, NULL, b, EXTRA) }
+    | except_kwd ':' b=block { _PyAST_ExceptHandler(NULL, NULL, b, EXTRA) }
     | invalid_except_stmt
 except_star_block[excepthandler_ty]:
     | invalid_except_star_stmt_indent
-    | 'except' '*' e=expression t=['as' z=NAME { z }] ':' b=block {
+    | except_kwd '*' e=expression t=[as_kwd z=NAME { z }] ':' b=block {
         _PyAST_ExceptHandler(e, (t) ? ((expr_ty) t)->v.Name.id : NULL, b, EXTRA) }
     | invalid_except_stmt
 finally_block[asdl_stmt_seq*]:
     | invalid_finally_stmt
-    | 'finally' &&':' a=block { a }
+    | finally_kwd &&':' a=block { a }
 
 # Match statement
 # ---------------
 
 match_stmt[stmt_ty]:
-    | "match" subject=subject_expr ':' NEWLINE INDENT cases[asdl_match_case_seq*]=case_block+ DEDENT {
+    | match_skwd subject=subject_expr ':' NEWLINE INDENT cases[asdl_match_case_seq*]=case_block+ DEDENT {
         CHECK_VERSION(stmt_ty, 10, "Pattern matching is", _PyAST_Match(subject, cases, EXTRA)) }
     | invalid_match_stmt
 
@@ -451,10 +560,10 @@ subject_expr[expr_ty]:
 
 case_block[match_case_ty]:
     | invalid_case_block
-    | "case" pattern=patterns guard=guard? ':' body=block {
+    | case_skwd pattern=patterns guard=guard? ':' body=block {
         _PyAST_match_case(pattern, guard, body, p->arena) }
 
-guard[expr_ty]: 'if' guard=named_expression { guard }
+guard[expr_ty]: if_kwd guard=named_expression { guard }
 
 patterns[pattern_ty]:
     | patterns[asdl_pattern_seq*]=open_sequence_pattern {
@@ -466,7 +575,7 @@ pattern[pattern_ty]:
     | or_pattern
 
 as_pattern[pattern_ty]:
-    | pattern=or_pattern 'as' target=pattern_capture_target {
+    | pattern=or_pattern as_kwd target=pattern_capture_target {
         _PyAST_MatchAs(pattern, target->v.Name.id, EXTRA) }
     | invalid_as_pattern
 
@@ -671,13 +780,13 @@ expressions[expr_ty]:
 expression[expr_ty] (memo):
     | invalid_expression
     | invalid_legacy_expression
-    | a=disjunction 'if' b=disjunction 'else' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
+    | a=disjunction if_kwd b=disjunction else_kwd c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
     | disjunction
     | lambdef
 
 yield_expr[expr_ty]:
-    | 'yield' 'from' a=expression { _PyAST_YieldFrom(a, EXTRA) }
-    | 'yield' a=[star_expressions] { _PyAST_Yield(a, EXTRA) }
+    | yield_kwd from_kwd a=expression { _PyAST_YieldFrom(a, EXTRA) }
+    | yield_kwd a=[star_expressions] { _PyAST_Yield(a, EXTRA) }
 
 star_expressions[expr_ty]:
     | a=star_expression b=(',' c=star_expression { c })+ [','] {
@@ -963,9 +1072,9 @@ for_if_clauses[asdl_comprehension_seq*]:
     | a[asdl_comprehension_seq*]=for_if_clause+ { a }
 
 for_if_clause[comprehension_ty]:
-    | ASYNC 'for' a=star_targets 'in' ~ b=disjunction c[asdl_expr_seq*]=('if' z=disjunction { z })* {
+    | ASYNC for_kwd a=star_targets 'in' ~ b=disjunction c[asdl_expr_seq*]=(if_kwd z=disjunction { z })* {
         CHECK_VERSION(comprehension_ty, 6, "Async comprehensions are", _PyAST_comprehension(a, b, c, 1, p->arena)) }
-    | 'for' a=star_targets 'in' ~ b=disjunction c[asdl_expr_seq*]=('if' z=disjunction { z })* {
+    | for_kwd a=star_targets 'in' ~ b=disjunction c[asdl_expr_seq*]=(if_kwd z=disjunction { z })* {
         _PyAST_comprehension(a, b, c, 0, p->arena) }
     | invalid_for_target
 
@@ -1154,7 +1263,7 @@ invalid_kwarg:
 
 # IMPORTANT: Note that the "_without_invalid" suffix causes the rule to not call invalid rules under it
 expression_without_invalid[expr_ty]:
-    | a=disjunction 'if' b=disjunction 'else' c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
+    | a=disjunction if_kwd b=disjunction else_kwd c=expression { _PyAST_IfExp(b, a, c, EXTRA) }
     | disjunction
     | lambdef
 invalid_legacy_expression:
@@ -1168,7 +1277,7 @@ invalid_expression:
    | !(NAME STRING | SOFT_KEYWORD) a=disjunction b=expression_without_invalid {
         _PyPegen_check_legacy_stmt(p, a) ? NULL : p->tokens[p->mark-1]->level == 0 ? NULL :
         RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "invalid syntax. Perhaps you forgot a comma?") }
-   | a=disjunction 'if' b=disjunction !('else'|':') { RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "expected 'else' after 'if' expression") }
+   | a=disjunction if_kwd b=disjunction !(else_kwd|':') { RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "expected 'else' after 'if' expression") }
    | a='lambda' [lambda_params] b=':' &FSTRING_MIDDLE  {
         RAISE_SYNTAX_ERROR_KNOWN_RANGE(a, b, "f-string: lambda expressions are not allowed without parentheses") }
 
@@ -1351,20 +1460,22 @@ invalid_class_pattern:
 invalid_class_argument_pattern[asdl_pattern_seq*]:
     | [positional_patterns ','] keyword_patterns ',' a=positional_patterns { a }
 invalid_if_stmt:
-    | 'if' named_expression NEWLINE { RAISE_SYNTAX_ERROR("expected ':'") }
+    | if_kwd named_expression NEWLINE { RAISE_SYNTAX_ERROR("expected ':'") }
     | a='if' a=named_expression ':' NEWLINE !INDENT {
         RAISE_INDENTATION_ERROR("expected an indented block after 'if' statement on line %d", a->lineno) }
 invalid_elif_stmt:
-    | 'elif' named_expression NEWLINE { RAISE_SYNTAX_ERROR("expected ':'") }
+    | elif_kwd named_expression NEWLINE { RAISE_SYNTAX_ERROR("expected ':'") }
     | a='elif' named_expression ':' NEWLINE !INDENT {
         RAISE_INDENTATION_ERROR("expected an indented block after 'elif' statement on line %d", a->lineno) }
 invalid_else_stmt:
     | a='else' ':' NEWLINE !INDENT {
         RAISE_INDENTATION_ERROR("expected an indented block after 'else' statement on line %d", a->lineno) }
 invalid_while_stmt:
-    | 'while' named_expression NEWLINE { RAISE_SYNTAX_ERROR("expected ':'") }
+    | while_kwd named_expression NEWLINE { RAISE_SYNTAX_ERROR("expected ':'") }
     | a='while' named_expression ':' NEWLINE !INDENT {
         RAISE_INDENTATION_ERROR("expected an indented block after 'while' statement on line %d", a->lineno) }
+    | a='zolang' named_expression ':' NEWLINE !INDENT {
+        RAISE_INDENTATION_ERROR("expected an indented block after 'zolang' statement on line %d", a->lineno) }
 invalid_for_stmt:
     | [ASYNC] 'for' star_targets 'in' star_expressions NEWLINE { RAISE_SYNTAX_ERROR("expected ':'") }
     | [ASYNC] a='for' star_targets 'in' star_expressions ':' NEWLINE !INDENT {
